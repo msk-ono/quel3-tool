@@ -1,0 +1,70 @@
+# Example QuEL-3 experiment configuration.
+#
+# Resource IDs below are placeholders. Replace "demo-unit" and the port names
+# with IDs from your own environment before running deploy/run.
+
+[[instrument]]
+alias = "drive-ge"
+port_id = "demo-unit:control-output"
+role = "TRANSMITTER"
+freq_min_ghz = 4.8
+freq_max_ghz = 5.2
+
+[[instrument]]
+alias = "drive-ef"
+port_id = "demo-unit:control-output"
+role = "TRANSMITTER"
+freq_min_ghz = 4.6
+freq_max_ghz = 5.0
+
+[[instrument]]
+alias = "readout"
+port_id = "demo-unit:readout-io"
+role = "TRANSCEIVER"
+freq_min_ghz = 6.8
+freq_max_ghz = 7.2
+
+[[run_config]]
+iterations = 1024
+iteration_interval_ns = 100_000
+capture_mode = "RAW_WAVEFORM"
+output_dir = "output"
+
+[[waveform]]
+name = "short-drive"
+sampling_period_fs = 400_000
+i = [0.0, 0.2, 0.6, 1.0, 0.6, 0.2, 0.0]
+q = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+[[waveform]]
+name = "readout-tone"
+sampling_period_fs = 800_000
+i = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+q = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+[[event]]
+alias = "drive-ge"
+waveform = "short-drive"
+start_offset_samples = 0
+gain = 0.8
+phase_offset_deg = 0.0
+
+[[event]]
+alias = "drive-ef"
+waveform = "short-drive"
+start_offset_samples = 32
+gain = 0.6
+phase_offset_deg = 90.0
+
+[[event]]
+alias = "readout"
+waveform = "readout-tone"
+start_offset_samples = 128
+gain = 1.0
+phase_offset_deg = 0.0
+
+[[capture]]
+alias = "readout"
+name = "readout-window"
+start_offset_samples = 128
+length_samples = 1024

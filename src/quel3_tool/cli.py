@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.text import Text
 
 from quel3_tool import __version__
+from quel3_tool._run.executor import deploy_from_file, run_from_file
 from quel3_tool.collect import collect_state_snapshot
 from quel3_tool.formatting import (
     has_diagnosis_errors,
@@ -109,6 +110,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Limit diagnoses to one port resource ID. Repeat for multiple ports.",
     )
     json_command.add_argument("--output", type=Path, help="Optional JSON output path.")
+
+    deploy = subparsers.add_parser("deploy", help="Deploy instruments from TOML.")
+    deploy.add_argument(
+        "config",
+        nargs="?",
+        type=Path,
+        default=Path("examples/config.toml"),
+        help="TOML config path.",
+    )
+
+    run = subparsers.add_parser("run", help="Deploy, run pulses, and capture.")
+    run.add_argument(
+        "config",
+        nargs="?",
+        type=Path,
+        default=Path("examples/config.toml"),
+        help="TOML config path.",
+    )
     return parser
 
 
@@ -121,6 +140,14 @@ def main(
     args = parser.parse_args(argv)
     console = Console(highlight=False)
     error_console = Console(stderr=True, highlight=False)
+    command = args.command or "summary"
+
+    if command in {"deploy", "run"}:
+        try:
+            return run_config_command(console, args)
+        except Exception as exc:
+            error_console.print(Text(f"quel3-tool failed: {exc}", style="bold red"))
+            return 1
 
     try:
         snapshot = collect_state_snapshot(
@@ -131,7 +158,6 @@ def main(
         error_console.print(Text(f"quel3-tool failed: {exc}", style="bold red"))
         return 1
 
-    command = args.command or "summary"
     if command == "summary":
         print_summary(console, snapshot)
     elif command == "units":
@@ -147,6 +173,32 @@ def main(
         return 1 if has_diagnosis_errors(snapshot) else 0
     else:
         parser.error(f"Unsupported command: {command}")
+    return 0
+
+
+def run_config_command(console: Console, args: argparse.Namespace) -> int:
+    endpoint, port = args.endpoint
+    if args.command == "deploy":
+        result = deploy_from_file(
+            args.config,
+            endpoint=endpoint,
+            port=port,
+            timeout_seconds=args.timeout,
+        )
+        console.print(f"Deployed {len(result.instruments)} instruments.")
+        return 0
+
+    result = run_from_file(
+        args.config,
+        endpoint=endpoint,
+        port=port,
+        timeout_seconds=args.timeout,
+    )
+    console.print(
+        f"Deployed {len(result.instruments)} instruments; "
+        f"trigger_count={result.trigger_count}; "
+        f"saved {len(result.output_files)} capture files."
+    )
     return 0
 
 

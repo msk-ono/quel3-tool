@@ -74,3 +74,17 @@ def test_json_command_always_includes_diagnosis() -> None:
 def test_json_command_does_not_accept_include_diagnosis() -> None:
     with pytest.raises(SystemExit):
         build_parser().parse_args(["json", "--include-diagnosis"])
+
+
+def test_deploy_command_accepts_config_path() -> None:
+    args = build_parser().parse_args(["deploy", "examples/config.toml"])
+
+    assert args.command == "deploy"
+    assert str(args.config) == "examples/config.toml"
+
+
+def test_run_command_defaults_to_example_config() -> None:
+    args = build_parser().parse_args(["run"])
+
+    assert args.command == "run"
+    assert str(args.config) == "examples/config.toml"
