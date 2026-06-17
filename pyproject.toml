@@ -5,7 +5,7 @@ description = "CLI tools for working with QuEL-3 state through quelware-client."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "quelware-client>=0.3.0",
+    "quelware-client>=0.4.0",
     "numpy",
     "rich",
     "tomli; python_version < '3.11'",
